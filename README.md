@@ -65,6 +65,7 @@ assembly_dirs = list of all the assembly directory names
 ```
 for i in `cat assembly_dirs`; do python get_local_molecules.py $i coords_bedfile output_dir path_to/OMTools.jar -p $i; done
 ```
+Note: this script assumes the directory structure of Bionano Saphyr _de novo_ assemblies. Older assemblies (i.e. from Irys systems) may require slight modifications to the script.
 
 ### Step 5: Run the genotyping script
 ```
