@@ -1,4 +1,4 @@
-# OMGenSV: a toolkit for using optical maps to genotype structural variation
+# OMGenSV: a toolkit for using Optical Maps to Genotype Structural Variation
 
 ## Prerequisites:
 
