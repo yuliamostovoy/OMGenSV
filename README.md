@@ -1,4 +1,4 @@
-# OMGenSV: a toolkit for using optical maps to genotype structural variation
+# OMGenSV: a toolkit for using Optical Maps to Genotype Structural Variation
 
 ## Prerequisites:
 
@@ -11,7 +11,7 @@ Python packages:
 - pybedtools (https://daler.github.io/pybedtools/main.html)
 
 ## Usage
-### Step 1: Identify local configurations and create corresponding cmaps
+### Step 1: Identify local configurations and create corresponding CMAPs
 First, you'll need to identify structural variation at your locus of interest by examining assembled contigs that align to the locus.
 
 Next, create accurate and complete CMAP representations of each variant, using the reference CMAP and assembled contig CMAPs as templates to be manipulated with the following tools:
@@ -38,6 +38,7 @@ Decide which CMAPs will be analyzed together and put them into a single CMAP fil
   - Each entry in the file should have a different CMAP ID
   - Focus on a single region at a time. If the locus being studied is long (i.e. several hundred kb, or more than the length of a typical single molecule in your data), it may be best to analyze different parts of it separately. For example, a strategy that we've used successfully for regions with long segmental duplications has been to identify variants anchored in either the upstream or downstream unique flanking areas, and analyze those two sets separately.
   - Each analysis must include at least two structurally different versions of the same region. The simplest case would be the reference configuration vs. an alternate configuration. 
+  - Aim to have each entry be as similar to the others as possible except for the specific variant that it represents. For example, the flanking regions around the variable area would ideally have the same length and composition in each entry. The goal is that molecules that align better to one entry than the others should be doing so solely because they share the variant found in that entry, and not because of other factors like differences in the flanking regions.
   - If the region has very high sequence identity to another region elsewhere, consider including the duplicate region as a decoy to prevent its molecules from aligning to your region of interest and giving false positive results.
 
 ### Step 3: Identify the 'critical regions' for each variant that you want to genotype
@@ -64,6 +65,7 @@ assembly_dirs = list of all the assembly directory names
 ```
 for i in `cat assembly_dirs`; do python get_local_molecules.py $i coords_bedfile output_dir path_to/OMTools.jar -p $i; done
 ```
+Note: this script assumes the directory structure of Bionano Saphyr _de novo_ assemblies. Older assemblies (i.e. from Irys systems) may require slight modifications to the script.
 
 ### Step 5: Run the genotyping script
 ```
@@ -82,7 +84,7 @@ java -jar path_to/OMTools.jar --viewrefin configurations.cmap --viewmapin [confi
 
 Make a note of which molecules have strong alignments to the configuration and which look questionable or poor. Because these evaluation files potentially compile molecules from multiple samples, which might have repeated molecule IDs, the script renumbers the molecules and creates a cross-reference file at to_evaluate_mol_IDs_crossreference. You can use this file to match molecules to sample IDs and then modify the results file accordingly.
 
-To rerun OMGenSV.py without rerunning the alignments (e.g. you may want to experiment with different versions of critical_regions_bedfile or change parameters like --min_perc, --min_mols, or --min_score), just omit the -a option. The script will look for completed [sample].oma alignment files in the designated output directory. The following flags are only used for alignments and will be ignored if -a is not set: -j, -t, --refs, --jar
+To quickly rerun OMGenSV.py without rerunning the alignments (e.g. you may want to experiment with different versions of critical_regions_bedfile or change parameters like --min_perc, --min_mols, or --min_score), just omit the -a option. The script will look for completed [sample].oma alignment files in the designated output directory. The following flags are only used for alignments and will be ignored if -a is not set: -j, -t, --refs, --jar
 
 ## Author
 Yulia Mostovoy, in Pui-Yan Kwok's lab at the University of California, San Francisco
