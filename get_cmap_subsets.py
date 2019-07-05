@@ -26,7 +26,7 @@ def main():
 					if position==end or j==len(cmaps[contig]):
 						pos.append(position)
 						labels.append(label)
-						finish(labels, pos, contig, i)
+						finish(labels, pos, contig, i, start, end)
 						pos, labels = [], []
 						break
 					elif position>end:

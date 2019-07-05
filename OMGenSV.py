@@ -40,9 +40,7 @@ def main():
 	print_results(hits, haps, '%s/results' % args.out_dir)
 
 	# Find samples that should be manually evaluated and write files to visualize them
-	min_perc = 0.25 # If minor allele has fewer supporting molecules than min_perc * major allele, evaluate the former manually
-	min_mols = 3 # If allele has fewer supporting molecules than min_mols, evaluate them manually
-	to_evaluate = select_molecules_to_evaluate(hits, min_perc, min_mols) #dict of hap-->list of samples
+	to_evaluate = select_molecules_to_evaluate(hits, args.min_perc, args.min_mols) #dict of hap-->list of samples
 	create_evaluation_files(to_evaluate, args, hits)
 
 	sys.stderr.write("Finished!\n")
