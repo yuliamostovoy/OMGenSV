@@ -79,7 +79,7 @@ The script assumes a specific convention for the local molecules CMAP files, nam
 It's recommended that manual evaluation be done for poorly-supported configurations in each sample. OMGenSV defines these as configurations that are supported in a sample by fewer than 3 molecules, or that are supported by fewer than 25% of the number of molecules that support the best-supported configuration in the sample. You can change these defaults with the --min_mols and --min_perc flags. For each configuration, the script prepares files for manual evaluation by pooling the supporting molecules from each sample where the configuration was poorly-supported. These are written to [configuration_ID]_hits_to_evaluate.oma and [configuration_ID]_hits_to_evaluate_q.cmap and can be visualized as follows:
 
 ```
-java -jar path_to/OMTools.jar --viewrefin configurations.cmap --viewmapin [configuration_ID]_hits_to_evaluate_q.cmap --viewresin [configuration_ID]_hits_to_evaluate.oma --viewannoin critical_regions_bedfile --viewregion [configuration_ID]:[start]-[end]
+java -jar path_to/OMTools.jar OMView --viewrefin configurations.cmap --viewmapin [configuration_ID]_hits_to_evaluate_q.cmap --viewresin [configuration_ID]_hits_to_evaluate.oma --viewannoin critical_regions_bedfile --viewregion [configuration_ID]:[start]-[end]
 ```
 
 Make a note of which molecules have strong alignments to the configuration and which look questionable or poor. Because these evaluation files potentially compile molecules from multiple samples, which might have repeated molecule IDs, the script renumbers the molecules and creates a cross-reference file at to_evaluate_mol_IDs_crossreference. You can use this file to match molecules to sample IDs and then modify the results file accordingly.
