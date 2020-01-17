@@ -22,7 +22,7 @@ def main():
 	molecules = set()
 	contig_regions = [] #list of lists with chr, start, end
 	# get local molecules for each region
-	sys.stderr.write("Getting molecules aligned to ref %s\n" % datetime.datetime.now())
+	sys.stderr.write("Getting molecules aligned to ref: %s\n" % datetime.datetime.now())
 	for chrom, start, end in coords:
 		start, end = int(start), int(end)
 		# define the contig regions that align to the specific region on the reference
@@ -32,7 +32,7 @@ def main():
 		# get molecules aligned directly to the specified region on the reference
 		molecules = molecules.union(get_overlapping_queries("%s/contigs/alignmolvref/merge/alignmolvref_contig%s.xmap" % (args.assembly_dir, chrom), chrom, start, end))
 
-	sys.stderr.write("Getting molecules aligned to contigs %s\n" % datetime.datetime.now())
+	sys.stderr.write("Getting molecules aligned to contigs: %s\n" % datetime.datetime.now())
 
 	if not args.mol_aln_dir:
 		# extract the molecule-to-contig alignment files for the relevant contigs
@@ -266,7 +266,8 @@ def check_parameters(args):
 	# Clean up directory names
 	args.assembly_dir = args.assembly_dir.rstrip('/')
 	args.output_dir = args.output_dir.rstrip('/')
-	args.mol_aln_dir = args.mol_aln_dir.rstrip('/')
+	if args.mol_aln_dir:
+		args.mol_aln_dir = args.mol_aln_dir.rstrip('/')
 
 	# check paths
 	if not os.path.exists(args.assembly_dir):
