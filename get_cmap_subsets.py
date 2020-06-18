@@ -1,4 +1,5 @@
 import sys
+from math import floor, ceil
 
 def main():
 	if len(sys.argv) != 3:
@@ -15,15 +16,18 @@ def main():
 	labels = []
 	for contig in subsets:
 		i=0
+		if contig not in cmaps:
+			sys.stderr.write("Error: ID %s not found in CMAP file\n" % contig)
+			continue
 		for start,end in subsets[contig]:
 			i+=1
 			for j, (label,position) in enumerate(cmaps[contig],start=1):
 				if not pos:
-					if position>=start:
+					if ceil(position)>=start: #taking floor/ceiling of input CMAP positions to avoid common errors from mixing decimals and round numbers
 						pos.append(position)
 						labels.append(label)
 				else:
-					if position==end or j==len(cmaps[contig]):
+					if floor(position)==end or position==end or j==len(cmaps[contig]):
 						pos.append(position)
 						labels.append(label)
 						finish(labels, pos, contig, i, start, end)
@@ -42,6 +46,9 @@ def read_subsets(filename):
 	subsets = {}
 	for line in subset_file:
 		line = line.strip().split('\t')
+		if len(line)<3:
+			sys.stderr.write("Error: subsets file has fewer than three tab-delimited columns. Format should be: ID[tab]start[tab]end\n")
+			sys.exit(1)
 		if line[0] not in subsets:
 			subsets[line[0]] = [(float(line[1]), float(line[2]))]
 		else:
