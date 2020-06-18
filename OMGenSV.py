@@ -18,6 +18,7 @@ def main():
 	parser.add_argument('--min_perc', dest='min_perc', help='If a sample has an allele with molecule support below %%min_perc of its best-supported allele, molecules supporting the former will be flagged for manual evaluation (range: 0-1, default: 0.25)', type=float, default=0.25)
 	parser.add_argument('--min_mols', dest='min_mols', help='An allele with molecule support below min_mols will have its molecules flagged for manual evaluation (default: 3)', type=int, default=3)
 	parser.add_argument('--min_score', dest='min_score', help='Minimum cumulative alignment score for reporting hits. Default: 0', type=float, default=0.0)
+	parser.add_argument('--max_size_change', dest='max_size_change', help='Maximum size change (i.e. indel length) between molecule and reference within the critical region, in bp. Default: 50000', type=int, default=50000)
 	args = parser.parse_args()
 
 	check_parameters(args)
@@ -66,14 +67,22 @@ def check_parameters(args):
 		sys.stderr.write("Error: min_perc must be between 0 and 1.\n")
 		sys.exit(1)
 
+	if args.max_size_change < 0:
+		sys.stderr.write("Error: max_size_change must be >=0.\n")
+		sys.exit(1)
+
 	# Clean up directory names
 	args.out_dir = args.out_dir.rstrip('/')
 	args.molecules_dir = args.molecules_dir.rstrip('/')
 
 def create_evaluation_files(to_evaluate, args, hits):
 	#renumbering the molecules so that there are no repeats when combining different samples
-	crossref = {} #sample-->mol ID-->renumbered ID
+	crossref = {} #sample-->old_mol_ID-->new_mol_ID
+	crossref_filename='%s/to_evaluate_mol_IDs_crossreference' % args.out_dir
+	crossref_outfile = open(crossref_filename,'w')
+	crossref_outfile.write("Sample\toriginal_mol_ID\tnew_mol_ID\tconfiguration\n")
 	new_ID_counter = 1
+
 	for hap in to_evaluate:
 		oma_outfile = open('%s/%s_hits_to_evaluate.oma' % (args.out_dir, hap), 'w')
 		qcmap_outfile = open('%s/%s_hits_to_evaluate_q.cmap' % (args.out_dir, hap), 'w')
@@ -81,28 +90,22 @@ def create_evaluation_files(to_evaluate, args, hits):
 		samples = to_evaluate[hap]
 
 		for sample in samples:
-			# create cross-referenced IDs
+			# create cross-referenced IDs and write to cross-reference file
 			if sample not in crossref:
 				crossref[sample] = {}
 			for mol in hits[sample][hap]:
 				crossref[sample][mol] = '%d' % new_ID_counter
 				new_ID_counter += 1
+				crossref_outfile.write("%s\t%s\t%s\t%s\n" % (sample, mol, crossref[sample][mol], hap))
 
+			# write to to_evaluate files
 			write_subset_of_queries_in_cmap(hits[sample][hap], '%s/%s%s' % (args.molecules_dir, sample, args.molecules_file_suffix), qcmap_outfile, crossref[sample], print_headers)
 			write_subset_of_queries_in_oma(hits[sample][hap], '%s/%s_best.oma' % (args.out_dir, sample), oma_outfile, crossref[sample], print_headers)
 			print_headers = False
 		oma_outfile.close()
 		qcmap_outfile.close()
 		
-	# print crossref info
-	crossref_filename='%s/to_evaluate_mol_IDs_crossreference' % args.out_dir
-	crossref_outfile = open(crossref_filename,'w')
-	crossref_outfile.write("Sample\toriginal_mol_ID\tnew_mol_ID\n")
-	for sample in crossref:
-		for mol in crossref[sample]:
-			crossref_outfile.write("%s\t%s\t%s\n" % (sample, mol, crossref[sample][mol]))
 	crossref_outfile.close()
-	subprocess.call(['sort', '-k3,3n', crossref_filename, '-o', crossref_filename], stdout=None, stderr=None, stdin=None)
 
 def write_subset_of_queries_in_oma(queries, oma_filename, out_file, crossref_mols, print_headers):
 	oma_file = open(oma_filename, 'r')
@@ -135,7 +138,7 @@ def select_molecules_to_evaluate(hits, min_perc, min_mols):
 	for sample in hits:
 		current_hits = hits[sample] #dict of hap-->list of molecules
 		major = max([len(x) for x in current_hits.values()]) # get the number of molecules for the haplotype with the most hits for this sample
-		if not major:
+		if not major: #max number of hits for this sample is zero
 			continue
 		for hap in current_hits:
 			num_mols = len(current_hits[hap])
@@ -174,10 +177,9 @@ def print_results(hits, haps, outfilename):
 		outfile.write('\n')
 	outfile.close()
 
-def get_hits(oma_filename, qcoords, chrom, start, end):
+def get_hits(oma_filename, qcoords, chrom, start, end, max_size_change):
 	mols = {}
 	indels = {} #by mol, list indels where the size change between mol and ref is larger than max_size_change
-	max_size_change=50000
 
 	omafile = open(oma_filename, 'r')
 	for line in omafile:
@@ -189,7 +191,7 @@ def get_hits(oma_filename, qcoords, chrom, start, end):
 			continue
 		if line[0] not in mols:
 			qe_seg = max(int(line[9]), int(line[10]))
-			qe = qcoords[line[0]][qe_seg-1]
+			qe = qcoords[line[0]][qe_seg] # deliberately not adjusting this for 0-based array because the end segment is always -1 in oma format
 			mols[line[0]] = {'start':float(line[11]), 'end':float(line[12]), 'conf':float(line[6]), 'qe':qe}
 		else:
 			### indels present ###
@@ -213,7 +215,7 @@ def get_hits(oma_filename, qcoords, chrom, start, end):
 			if re > mols[line[0]]['end']:
 				mols[line[0]]['end'] = re
 			qe_seg = max(int(line[9]), int(line[10]))
-			mols[line[0]]['qe'] = qcoords[line[0]][qe_seg-1]
+			mols[line[0]]['qe'] = qcoords[line[0]][qe_seg] # deliberately not adjusting this for 0-based array because the end segment is always -1 in oma format
 
 	omafile.close()
 
@@ -251,7 +253,7 @@ def get_hits_wrapper(sample, hits, args, log, hapinfo):
 	# Get hits for each haplotype that span the critical region(s)
 	qcoords = process_query_file('%s/%s%s' % (args.molecules_dir, sample, args.molecules_file_suffix))
 	for cmap_ID, CR_start, CR_end, hapname in hapinfo:
-		current_hits = get_hits('%s/%s_best.oma' % (args.out_dir, sample), qcoords, cmap_ID, CR_start, CR_end)
+		current_hits = get_hits('%s/%s_best.oma' % (args.out_dir, sample), qcoords, cmap_ID, CR_start, CR_end, args.max_size_change)
 		if hapname not in hits[sample]:
 			hits[sample][hapname] = current_hits
 		else:
@@ -296,6 +298,8 @@ def read_hapinfo(hapinfo_filename):
 		sys.exit(1)
 	for line in hapfile:
 		line=line.strip().split('\t')
+		if len(line)==3: #if no configuration name is given, use the configuration ID instead
+			line.append(line[0])
 		hapinfo.append([line[0], float(line[1]), float(line[2]), line[3]])
 	hapfile.close()
 	hapinfo.sort(key=lambda x: x[3]) #sort of hap name
