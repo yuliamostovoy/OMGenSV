@@ -84,7 +84,7 @@ java -jar path_to/OMTools.jar OMView --viewrefin configurations.cmap --viewmapin
 
 Make a note of which molecules have strong alignments to the configuration and which look questionable or poor. Because these evaluation files potentially compile molecules from multiple samples, which might have repeated molecule IDs, the script renumbers the molecules and creates a cross-reference file at to_evaluate_mol_IDs_crossreference. You can use this file to match molecules to sample IDs and then modify the results file accordingly.
 
-To quickly rerun OMGenSV.py without rerunning the alignments (e.g. you may want to experiment with different versions of critical_regions_bedfile or change parameters like --min_perc, --min_mols, or --min_score), just omit the -a option. The script will look for completed [sample].oma alignment files in the designated output directory. The following flags are only used for alignments and will be ignored if -a is not set: -j, -t, --refs, --jar
+To quickly rerun OMGenSV.py without rerunning the alignments (e.g. you may want to experiment with different versions of critical_regions_bedfile or change parameters like --min_perc, --min_mols, --min_score, or --max_size_change), just omit the -a option. The script will look for completed [sample].oma alignment files in the designated output directory. The following flags are only used for alignments and will be ignored if -a is not set: -j, -t, --refs, --jar
 
 ## Author
 Yulia Mostovoy, in Pui-Yan Kwok's lab at the University of California, San Francisco
